@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import type { Priority } from '../types';
+import { priorityColors } from '../types';
 
 interface TaskFormProps {
-  onSubmit: (title: string, description?: string) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (title: string, priority: Priority, description?: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function TaskForm({ onSubmit }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDescription, setShowDescription] = useState(false);
@@ -18,11 +21,12 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
     setLoading(true);
     setError(null);
 
-    const result = await onSubmit(title.trim(), description.trim() || undefined);
+    const result = await onSubmit(title.trim(), priority, description.trim() || undefined);
 
     if (result.success) {
       setTitle('');
       setDescription('');
+      setPriority('medium');
       setShowDescription(false);
     } else {
       setError(result.error || 'Failed to add task');
@@ -30,6 +34,12 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
 
     setLoading(false);
   };
+
+  const priorities: { value: Priority; label: string }[] = [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+  ];
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -54,6 +64,30 @@ export function TaskForm({ onSubmit }: TaskFormProps) {
         >
           {loading ? 'Adding...' : 'Add'}
         </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <span className="text-sm text-gray-500">Priority:</span>
+        <div className="flex gap-2">
+          {priorities.map(({ value, label }) => {
+            const colors = priorityColors[value];
+            const isSelected = priority === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setPriority(value)}
+                className={`px-3 py-1 text-sm rounded-full border transition-all ${
+                  isSelected
+                    ? `${colors.bg} ${colors.text} ${colors.border} border-2`
+                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-3">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Task } from '../types';
+import type { Task, Priority } from '../types';
 
 export function useTasks(userId: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,13 +29,14 @@ export function useTasks(userId: string) {
     fetchTasks();
   }, [fetchTasks]);
 
-  const addTask = async (title: string, description?: string) => {
+  const addTask = async (title: string, priority: Priority, description?: string) => {
     try {
       const { data, error } = await supabase
         .from('tasks')
         .insert({
           user_id: userId,
           title,
+          priority,
           description: description || null,
           completed: false,
         })
@@ -50,7 +51,7 @@ export function useTasks(userId: string) {
     }
   };
 
-  const updateTask = async (id: string, updates: { title?: string; description?: string; completed?: boolean }) => {
+  const updateTask = async (id: string, updates: { title?: string; description?: string; completed?: boolean; priority?: Priority }) => {
     try {
       const { data, error } = await supabase
         .from('tasks')

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import type { Task } from '../types';
+import type { Task, Priority } from '../types';
+import { priorityColors } from '../types';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdate: (id: string, updates: { title?: string; description?: string }) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, updates: { title?: string; description?: string; priority?: Priority }) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -12,6 +13,7 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description || '');
+  const [editPriority, setEditPriority] = useState<Priority>(task.priority);
   const [loading, setLoading] = useState(false);
 
   const handleToggle = async () => {
@@ -26,6 +28,7 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
     const result = await onUpdate(task.id, {
       title: editTitle.trim(),
       description: editDescription.trim() || undefined,
+      priority: editPriority,
     });
     if (result.success) {
       setIsEditing(false);
@@ -43,8 +46,17 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
   const handleCancel = () => {
     setEditTitle(task.title);
     setEditDescription(task.description || '');
+    setEditPriority(task.priority);
     setIsEditing(false);
   };
+
+  const priorities: { value: Priority; label: string }[] = [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+  ];
+
+  const colors = priorityColors[task.priority];
 
   if (isEditing) {
     return (
@@ -62,6 +74,27 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
           rows={2}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-3"
         />
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="text-sm text-gray-500">Priority:</span>
+          {priorities.map(({ value, label }) => {
+            const pColors = priorityColors[value];
+            const isSelected = editPriority === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setEditPriority(value)}
+                className={`px-3 py-1 text-sm rounded-full border transition-all ${
+                  isSelected
+                    ? `${pColors.bg} ${pColors.text} ${pColors.border} border-2`
+                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <div className="flex gap-2 justify-end">
           <button
             onClick={handleCancel}
@@ -106,9 +139,14 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
         </button>
 
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-gray-900 ${task.completed ? 'line-through' : ''}`}>
-            {task.title}
-          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className={`font-medium text-gray-900 ${task.completed ? 'line-through' : ''}`}>
+              {task.title}
+            </h3>
+            <span className={`px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text}`}>
+              {task.priority}
+            </span>
+          </div>
           {task.description && (
             <p className={`mt-1 text-sm text-gray-500 ${task.completed ? 'line-through' : ''}`}>
               {task.description}

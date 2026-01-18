@@ -1,12 +1,12 @@
 import { TaskItem } from './TaskItem';
-import type { Task } from '../types';
+import type { Task, Priority } from '../types';
 
 interface TaskListProps {
   tasks: Task[];
   loading: boolean;
   error: string | null;
   onToggle: (id: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdate: (id: string, updates: { title?: string; description?: string }) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, updates: { title?: string; description?: string; priority?: Priority }) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
