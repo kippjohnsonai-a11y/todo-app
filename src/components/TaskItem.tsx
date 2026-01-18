@@ -15,6 +15,7 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
   const [editDescription, setEditDescription] = useState(task.description || '');
   const [editPriority, setEditPriority] = useState<Priority>(task.priority);
   const [loading, setLoading] = useState(false);
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
 
   const handleToggle = async () => {
     setLoading(true);
@@ -57,6 +58,17 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
   ];
 
   const colors = priorityColors[task.priority];
+
+  const handlePriorityChange = async (newPriority: Priority) => {
+    if (newPriority === task.priority) {
+      setShowPriorityDropdown(false);
+      return;
+    }
+    setLoading(true);
+    setShowPriorityDropdown(false);
+    await onUpdate(task.id, { priority: newPriority });
+    setLoading(false);
+  };
 
   if (isEditing) {
     return (
@@ -143,9 +155,41 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }: TaskItemProps) 
             <h3 className={`font-medium text-gray-900 ${task.completed ? 'line-through' : ''}`}>
               {task.title}
             </h3>
-            <span className={`px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text}`}>
-              {task.priority}
-            </span>
+            <div className="relative">
+              <button
+                onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                disabled={loading || task.completed}
+                className={`px-2 py-0.5 text-xs rounded-full cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed ${colors.bg} ${colors.text}`}
+                title="Click to change priority"
+              >
+                {task.priority}
+              </button>
+              {showPriorityDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowPriorityDropdown(false)}
+                  />
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-20">
+                    {priorities.map(({ value, label }) => {
+                      const pColors = priorityColors[value];
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => handlePriorityChange(value)}
+                          className={`w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                            value === task.priority ? 'font-medium' : ''
+                          }`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${pColors.bg} ${pColors.border} border`} />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           {task.description && (
             <p className={`mt-1 text-sm text-gray-500 ${task.completed ? 'line-through' : ''}`}>
